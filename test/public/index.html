@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Beep the AI Assistant</title>
+<style>
+  body {
+    font-family: 'Roboto Mono', monospace;
+    background: #1E2E30;
+    color: white;
+    margin: 0; padding: 0;
+  }
+  h1, h2 {
+    font-family: 'Major Mono Display', monospace;
+    color: #AAF0FF;
+    text-align: center;
+    margin-top: 40px;
+  }
+  .container {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  .speech-bubble {
+    background: rgba(60,60,60,0.85);
+    padding: 20px;
+    border-radius: 12px;
+    max-width: 500px;
+    margin: 30px auto;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  .robot-image {
+    width: 60px;
+    height: auto;
+  }
+  input[type=text] {
+    width: 100%;
+    max-width: 500px;
+    padding: 12px 15px;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    margin-top: 20px;
+    background: #2A3B3E;
+    color: white;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  button {
+    display: block;
+    margin: 20px auto;
+    background: #AAF0FF;
+    border: none;
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #1E2E30;
+    box-shadow: 0 0 10px #AAF0FF88;
+  }
+  button:hover {
+    background: #89d4e1;
+  }
+  #ai-response {
+    max-width: 500px;
+    margin: 10px auto 40px auto;
+    background: rgba(138,210,235,0.2);
+    border-left: 6px solid #AAF0FF;
+    border-radius: 8px;
+    font-style: italic;
+    padding: 15px 20px;
+    text-align: center;
+    min-height: 60px;
+  }
+  #chat-section {
+    background: #273C3F;
+    padding: 40px 20px 60px;
+  }
+  #chat-box {
+    max-width: 700px;
+    margin: 0 auto 15px auto;
+    background: rgba(255,255,255,0.08);
+    padding: 15px;
+    border-radius: 12px;
+    height: 300px;
+    overflow-y: auto;
+    font-size: 1.1rem;
+    line-height: 1.3;
+  }
+  .chat-message {
+    max-width: 70%;
+    margin-bottom: 12px;
+    padding: 8px 15px;
+    border-radius: 20px;
+    word-wrap: break-word;
+  }
+  .chat-message.robot {
+    background: #4A7C8C;
+    color: #D7F2FC;
+    text-align: left;
+    margin-left: 0;
+  }
+  .chat-message.user {
+    background: #AAF0FF;
+    color: #1E2E30;
+    text-align: right;
+    margin-left: auto;
+  }
+  #chat-input {
+    width: 100%;
+    max-width: 700px;
+    padding: 12px 15px;
+    font-size: 1.1rem;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    background: #2A3B3E;
+    color: white;
+    display: block;
+    margin: 0 auto 15px auto;
+  }
+  #send-btn {
+    display: block;
+    margin: 0 auto;
+    background: #AAF0FF;
+    color: #1E2E30;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 28px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 0 10px #AAF0FF88;
+  }
+  #send-btn:hover {
+    background: #89d4e1;
+  }
+</style>
+</head>
+<body>
+
+  <!-- PAGE 1 -->
+  <section class="container" id="page1">
+    <h1>Beep the AI Assistant</h1>
+    <div class="speech-bubble" id="ai-message">
+      <img class="robot-image" src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" alt="Robot Icon" />
+      <span>Hi! I will be your AI best friend. Respond to the questions sincerely and I will give you feedback.</span>
+    </div>
+
+    <input type="text" id="user-input" placeholder="What's on your mind?" autocomplete="off" />
+    <button id="submit-btn">Submit</button>
+    <div id="ai-response"></div>
+
+    <button style="margin-top: 50px;" id="go-chat">Go to Chat Page ↓</button>
+  </section>
+
+  <!-- PAGE 2 -->
+  <section id="chat-section">
+    <h2>Chat with Beep 🤖</h2>
+
+    <div id="chat-box"></div>
+
+    <input type="text" id="chat-input" placeholder="Type your message here..." autocomplete="off" />
+    <button id="send-btn">Send</button>
+  </section>
+<script>
+    const submitBtn = document.getElementById('submit-btn');
+    const userInput = document.getElementById('user-input');
+    const aiResponse = document.getElementById('ai-response');
+  
+    submitBtn.onclick = async () => {
+      const input = userInput.value.trim();
+      if (!input) return;
+  
+      const res = await fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: input })
+      });
+  
+      const data = await res.json();
+      aiResponse.textContent = data.reply || 'No response';
+      userInput.value = '';
+    };
+  
+    const chatBox = document.getElementById('chat-box');
+    const chatInput = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-btn');
+  
+    function appendMessage(text, sender) {
+      const msg = document.createElement('div');
+      msg.classList.add('chat-message', sender);
+      msg.textContent = text;
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  
+    async function sendChatMessage() {
+      const msg = chatInput.value.trim();
+      if (!msg) return;
+      appendMessage(msg, 'user');
+      chatInput.value = '';
+  
+      const res = await fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg })
+      });
+  
+      const data = await res.json();
+      appendMessage(data.reply || '...', 'robot');
+    }
+  
+    sendBtn.onclick = sendChatMessage;
+    chatInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') sendChatMessage();
+    });
+  
+    document.getElementById('go-chat').onclick = () => {
+      document.getElementById('chat-section').scrollIntoView({ behavior: 'smooth' });
+    };
+  </script>
+  
