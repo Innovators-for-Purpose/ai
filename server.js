@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { GoogleGenAI } = require('@google/genai'); 
+const conversationHistory = [];  // <--- ADD THIS LINE HERE
 
 // Initialize Gemini
 const ai = new GoogleGenAI({
@@ -39,22 +40,32 @@ const server = http.createServer(async (req, res) => {
     });
 
   } else if (req.method === 'POST' && req.url === '/api/ask') {
-    // Handle AI request
     let body = '';
     req.on('data', chunk => (body += chunk));
     req.on('end', async () => {
       try {
-        const {message} = JSON.parse(body);
+        const { message } = JSON.parse(body);
 
-      const result = await ai.models.generateContent({
+        // Add user message to conversation history
+        conversationHistory.push({ role: 'user', content: message });
 
-       model: 'gemini-2.5-flash',
-         contents: "Please look at the following message: \"" + message + "\"\n\n Please respond in a clear and natural tone, similar to how ChatGPT answers. Use full sentences and organize the information in short paragraphs. Do not use formatting symbols like asterisks, bold, italics, or bullet points. Avoid overly casual or overly enthusiastic language. Just give a well-written, informative answer in plain text that’s easy to read. You can use emojis"
+        // Build conversation text for AI prompt
+        const conversationText = conversationHistory.map(entry =>
+          `${entry.role === 'user' ? 'User' : 'Assistant'}: ${entry.content}`
+        ).join('\n');
 
+        // Send full conversation to Gemini
+        const result = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: `The following is a conversation between a user and an assistant:\n${conversationText}\nAssistant:`
+        });
 
-         });
-      const text = result.candidates[0].content.parts[0].text; 
+        const text = result.candidates[0].content.parts[0].text.trim();
 
+        // Add AI response to conversation history
+        conversationHistory.push({ role: 'assistant', content: text });
+
+        // Respond to client
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ reply: text }));
       } catch (err) {
